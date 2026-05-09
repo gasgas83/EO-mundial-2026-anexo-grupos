@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>EO Mundial 2026 Countdown</title>
+
+    <style>
+      body {
+        margin: 0;
+      }
+    </style>
+
+    <!-- script de EO para probar Google analytics -->
+    <script xmlns:deferer="no" async src="https://www.googletagmanager.com/gtag/js?id=G-R75TH74BCK"></script>
+    <script xmlns:deferer="no">
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-R75TH74BCK", { debug_mode: true });
+      gtag("set", {
+        dimension1: "El Observador: Noticias de Argentina y del mundo",
+        dimension2: "",
+        dimension3: "page",
+        dimension4: "",
+        dimension5: "",
+        dimension6: "",
+        dimension7: "",
+        dimension8: "",
+        dimension9: "",
+      });
+    </script>
+  </head>
+
+  <body>
+    <!-- <div style="height: 5000px"></div> -->
+
+    <div>
+      <eo-grupos-mundial td-allow isDev="false"></eo-grupos-mundial>
+      <!-- <eo-grupos-mundial td-allow isDev="false" showGroup="H" teamSelect="172"></eo-grupos-mundial> -->
+    </div>
+
+    <!-- <div style="height: 5000px"></div> -->
+    <script type="module" src="/src/main.js"></script>
+    <!-- <script type="module" src="https://especiales.elobservador.com.uy/interactivo/widgets/eo-countdown-mundial-2026/eo-countdown-mundial-2026.5fd4917c.js"></script> -->
+  </body>
+</html>

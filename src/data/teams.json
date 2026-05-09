@@ -1,0 +1,338 @@
+[
+  {
+    "id": 13,
+    "nombre": "A. Saudita",
+    "nombreCorto": "ARA",
+    "grupo": "H",
+    "bandera": "a-saudita.svg"
+  },
+  {
+    "id": 49,
+    "nombre": "Alemania",
+    "nombreCorto": "ALE",
+    "grupo": "E",
+    "bandera": "alemania.svg"
+  },
+  {
+    "id": 15,
+    "nombre": "Argelia",
+    "nombreCorto": "Argelia",
+    "grupo": "J",
+    "bandera": "argelia.svg"
+  },
+  {
+    "id": 1,
+    "nombre": "Argentina",
+    "nombreCorto": "ARG",
+    "grupo": "J",
+    "bandera": "argentina.svg"
+  },
+  {
+    "id": 7,
+    "nombre": "Australia",
+    "nombreCorto": "AUS",
+    "grupo": "D",
+    "bandera": "australia.svg"
+  },
+  {
+    "id": 32,
+    "nombre": "Austria",
+    "nombreCorto": "AUS",
+    "grupo": "J",
+    "bandera": "austria.svg"
+  },
+  {
+    "id": 33,
+    "nombre": "Bélgica",
+    "nombreCorto": "BEL",
+    "grupo": "G",
+    "bandera": "belgica.svg"
+  },
+  {
+    "id": 6,
+    "nombre": "Brasil",
+    "nombreCorto": "BRA",
+    "grupo": "C",
+    "bandera": "brasil.svg"
+  },
+  {
+    "id": 17,
+    "nombre": "C. de Marfil",
+    "nombreCorto": "COS",
+    "grupo": "E",
+    "bandera": "c-de-marfil.svg"
+  },
+  {
+    "id": 16,
+    "nombre": "Cabo Verde",
+    "nombreCorto": "CAB",
+    "grupo": "H",
+    "bandera": "cabo-verde.svg"
+  },
+  {
+    "id": 2,
+    "nombre": "Canadá",
+    "nombreCorto": "CAN",
+    "grupo": "B",
+    "bandera": "canada.svg"
+  },
+  {
+    "id": 27,
+    "nombre": "Colombia",
+    "nombreCorto": "COL",
+    "grupo": "K",
+    "bandera": "colombia.svg"
+  },
+  {
+    "id": 34,
+    "nombre": "Croacia",
+    "nombreCorto": "CRO",
+    "grupo": "L",
+    "bandera": "croacia.svg"
+  },
+  {
+    "id": 24,
+    "nombre": "Curazao",
+    "nombreCorto": "CUR",
+    "grupo": "E",
+    "bandera": "curazao.svg"
+  },
+  {
+    "id": 28,
+    "nombre": "Ecuador",
+    "nombreCorto": "ECU",
+    "grupo": "E",
+    "bandera": "ecuador.svg"
+  },
+  {
+    "id": 3,
+    "nombre": "EEUU",
+    "nombreCorto": "EEUU",
+    "grupo": "D",
+    "bandera": "eeuu.svg"
+  },
+  {
+    "id": 18,
+    "nombre": "Egipto",
+    "nombreCorto": "EGI",
+    "grupo": "G",
+    "bandera": "egipto.svg"
+  },
+  {
+    "id": 41,
+    "nombre": "Escocia",
+    "nombreCorto": "ESC",
+    "grupo": "C",
+    "bandera": "escocia.svg"
+  },
+  {
+    "id": 50,
+    "nombre": "España",
+    "nombreCorto": "ESP",
+    "grupo": "H",
+    "bandera": "espana.svg"
+  },
+  {
+    "id": 47,
+    "nombre": "R. D. Congo",
+    "nombreCorto": "COD",
+    "grupo": "K",
+    "bandera": "rd-congo.svg"
+  },
+  {
+    "id": 48,
+    "nombre": "Irak",
+    "nombreCorto": "IRQ",
+    "grupo": "I",
+    "bandera": "irak.svg"
+  },
+  {
+    "id": 36,
+    "nombre": "Francia",
+    "nombreCorto": "FRA",
+    "grupo": "I",
+    "bandera": "francia.svg"
+  },
+  {
+    "id": 19,
+    "nombre": "Ghana",
+    "nombreCorto": "GHA",
+    "grupo": "L",
+    "bandera": "ghana.svg"
+  },
+  {
+    "id": 25,
+    "nombre": "Haití",
+    "nombreCorto": "Haití",
+    "grupo": "C",
+    "bandera": "haiti.svg"
+  },
+  {
+    "id": 35,
+    "nombre": "Inglaterra",
+    "nombreCorto": "ING",
+    "grupo": "L",
+    "bandera": "inglaterra.svg"
+  },
+  {
+    "id": 8,
+    "nombre": "Irán",
+    "nombreCorto": "IRA",
+    "grupo": "G",
+    "bandera": "iran.svg"
+  },
+  {
+    "id": 9,
+    "nombre": "Japón",
+    "nombreCorto": "JAP",
+    "grupo": "F",
+    "bandera": "japon.svg"
+  },
+  {
+    "id": 10,
+    "nombre": "Jordania",
+    "nombreCorto": "JOR",
+    "grupo": "J",
+    "bandera": "jordania.svg"
+  },
+  {
+    "id": 20,
+    "nombre": "Marruecos",
+    "nombreCorto": "MAR",
+    "grupo": "C",
+    "bandera": "marruecos.svg"
+  },
+  {
+    "id": 4,
+    "nombre": "México",
+    "nombreCorto": "MEJ",
+    "grupo": "A",
+    "bandera": "mexico.svg"
+  },
+  {
+    "id": 31,
+    "nombre": "N. Zelanda",
+    "nombreCorto": "NZE",
+    "grupo": "G",
+    "bandera": "n-zelanda.svg"
+  },
+  {
+    "id": 39,
+    "nombre": "Noruega",
+    "nombreCorto": "NOR",
+    "grupo": "I",
+    "bandera": "noruega.svg"
+  },
+  {
+    "id": 38,
+    "nombre": "Países Bajos",
+    "nombreCorto": "HOL",
+    "grupo": "F",
+    "bandera": "paises-bajos.svg"
+  },
+  {
+    "id": 26,
+    "nombre": "Panamá",
+    "nombreCorto": "PAN",
+    "grupo": "L",
+    "bandera": "panama.svg"
+  },
+  {
+    "id": 29,
+    "nombre": "Paraguay",
+    "nombreCorto": "PAR",
+    "grupo": "D",
+    "bandera": "paraguay.svg"
+  },
+  {
+    "id": 40,
+    "nombre": "Portugal",
+    "nombreCorto": "POR",
+    "grupo": "K",
+    "bandera": "portugal.svg"
+  },
+  {
+    "id": 12,
+    "nombre": "Qatar",
+    "nombreCorto": "QAT",
+    "grupo": "B",
+    "bandera": "qatar.svg"
+  },
+  {
+    "id": 11,
+    "nombre": "R. de Corea",
+    "nombreCorto": "COR",
+    "grupo": "A",
+    "bandera": "r-de-corea.svg"
+  },
+  {
+    "id": 21,
+    "nombre": "Senegal",
+    "nombreCorto": "SEN",
+    "grupo": "I",
+    "bandera": "senegal.svg"
+  },
+  {
+    "id": 22,
+    "nombre": "Sudáfrica",
+    "nombreCorto": "SUD",
+    "grupo": "A",
+    "bandera": "sudafrica.svg"
+  },
+  {
+    "id": 43,
+    "nombre": "Suiza",
+    "nombreCorto": "SUI",
+    "grupo": "B",
+    "bandera": "suiza.svg"
+  },
+  {
+    "id": 23,
+    "nombre": "Túnez",
+    "nombreCorto": "TUN",
+    "grupo": "F",
+    "bandera": "tunez.svg"
+  },
+  {
+    "id": 5,
+    "nombre": "Bosnia y Herz.",
+    "nombreCorto": "BIH",
+    "grupo": "B",
+    "bandera": "bosnia-herzegovina.svg"
+  },
+  {
+    "id": 46,
+    "nombre": "Suecia",
+    "nombreCorto": "SUE",
+    "grupo": "F",
+    "bandera": "suecia.svg"
+  },
+  {
+    "id": 45,
+    "nombre": "Turquía",
+    "nombreCorto": "TUR",
+    "grupo": "D",
+    "bandera": "turquia.svg"
+  },
+  {
+    "id": 44,
+    "nombre": "Rep. Checa",
+    "nombreCorto": "CZE",
+    "grupo": "A",
+    "bandera": "rep-checa.svg"
+  },
+  {
+    "id": 51,
+    "nombre": "Uruguay",
+    "nombreCorto": "URU",
+    "grupo": "H",
+    "bandera": "uruguay.svg"
+  },
+  {
+    "id": 14,
+    "nombre": "Uzbekistán",
+    "nombreCorto": "UZBE",
+    "grupo": "K",
+    "bandera": "uzbekistan.svg"
+  }
+]
