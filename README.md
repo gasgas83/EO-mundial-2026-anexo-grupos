@@ -12,13 +12,23 @@ Tag del componente:
 
 - `isDev` (`"true" | "false"`): usa `EO-df-grupos-dev.json` cuando está en `true`.
 - `showGroup` (`"A" ... "L"`): si viene con valor, renderiza solo ese grupo.
-- `teamSelect` (`string | number`): aplica highlight suave al equipo cuyo `id` (de `src/data/teams.json`) coincide.
 
 Ejemplo:
 
 ```html
-<eo-grupos-mundial showGroup="A" teamSelect="21"></eo-grupos-mundial>
+<eo-grupos-mundial showGroup="A"></eo-grupos-mundial>
 ```
+
+## Highlight automático por URL
+
+El componente aplica highlight automáticamente cuando la URL de la página donde está embebido contiene alguno de estos slugs:
+
+| Slug en URL | ID feed | País |
+| --- | --- | --- |
+| `argentina` | 21 | Argentina |
+| `espana` | 280 | España |
+| `estados-unidos` | 281 | Estados Unidos |
+| `uruguay` | 172 | Uruguay |
 
 ## Fuente de datos
 

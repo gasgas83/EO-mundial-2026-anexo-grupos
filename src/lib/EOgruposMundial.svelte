@@ -16,22 +16,32 @@
 
   export let isDev = "false";
   export let showGroup = "";
-  export let teamSelect = "";
 
   const RESULTS_BASE_URL = "https://n8n.elobservador.com.uy/jsons/mundial2026";
   const DEFAULT_POLL_INTERVAL = 2 * 60 * 1000;
   const flagsBasePath = "https://strapi.elobservador.com.uy/eo-widgets/eo-mundial/eo-anexo-grupos/flags/teams";
+  const argentinaTeamId = 21;
+  const defaultHighlightedTeamIds = [172];
+  const highlightedTeamsByUrlSlug = {
+    argentina: argentinaTeamId,
+    espana: 280,
+    "estados unidos": 281,
+  };
 
   const textCorrections = {
     "m�xico": "México",
+    "pa�ses bajos": "Países Bajos",
     "sud�frica": "Sudáfrica",
     "rep�blica checa": "República Checa",
+    "republica checa": "República Checa",
     "canad�": "Canadá",
     "espa�a": "España",
     "turqu�a": "Turquía",
+    "uzbekist�n": "Uzbekistán",
     "bosnia-herz.": "Bosnia y Herz.",
     "jap�n": "Japón",
     "t�nez": "Túnez",
+    "ir�n": "Irán",
     iran: "Irán",
     "hait�": "Haití",
     "panam�": "Panamá",
@@ -50,6 +60,9 @@
     "nueva zelanda": "N. Zelanda",
     "rep de corea": "R. de Corea",
     "republica de corea": "R. de Corea",
+    "republica checa": "Rep. Checa",
+    "rd congo": "R. D. Congo",
+    "r d congo": "R. D. Congo",
     "paises bajos": "Países Bajos",
   };
 
@@ -75,11 +88,15 @@
     // Fallback for common feed mojibake with replacement chars.
     return decoded
       .replace(/�frica/gi, "áfrica")
+      .replace(/Pa�ses/gi, "Países")
       .replace(/Jap�n/gi, "Japón")
+      .replace(/Rep�blica/gi, "República")
       .replace(/Canad�/gi, "Canadá")
       .replace(/Panam�/gi, "Panamá")
       .replace(/Turqu�a/gi, "Turquía")
+      .replace(/Uzbekist�n/gi, "Uzbekistán")
       .replace(/T�nez/gi, "Túnez")
+      .replace(/Ir�n/gi, "Irán")
       .replace(/Hait�/gi, "Haití")
       .replace(/M�xico/gi, "México")
       .replace(/Espa�a/gi, "España");
@@ -136,6 +153,27 @@
       flagUrl: "",
     };
   };
+
+  const getPageUrlContext = () => {
+    if (typeof window === "undefined") return "";
+
+    const ancestorOrigins = window.location?.ancestorOrigins ? Array.from(window.location.ancestorOrigins) : [];
+    return [window.location?.href, document?.referrer, ...ancestorOrigins].filter(Boolean).join(" ");
+  };
+
+  const getHighlightedTeamIds = (urlContext) => {
+    const highlightedIds = new Set();
+    const normalizedUrl = normalizeText(urlContext);
+    if (!normalizedUrl) return new Set(defaultHighlightedTeamIds);
+
+    for (const [slug, id] of Object.entries(highlightedTeamsByUrlSlug)) {
+      if (normalizedUrl.includes(slug)) highlightedIds.add(id);
+    }
+
+    return highlightedIds.size ? highlightedIds : new Set(defaultHighlightedTeamIds);
+  };
+
+  const isHighlightedTeam = (team) => highlightedTeamIds.has(Number(team?.sourceId));
 
   const getTeamFromNode = (node) => {
     const attrs = node.attributes;
@@ -200,7 +238,16 @@
   let canSlidePrev = false;
   let canSlideNext = true;
   let visibleGroups = groups;
+  let displayedGroups = groups;
   let useSwiper = true;
+  let rootElement;
+  let groupTabsElement;
+  let resizeObserver;
+  let isMobile = false;
+  let activeMobileGroup = "";
+  let hasUserSelectedMobileGroup = false;
+  let pageUrlContext = "";
+  let lastAutoScrolledGroup = "";
 
   const loadGroups = async () => {
     try {
@@ -230,19 +277,14 @@
     if (!swiperContainer || swiperInitialized) return;
 
     Object.assign(swiperContainer, {
-      slidesPerView: 2,
-      slidesPerGroup: 2,
+      slidesPerView: "auto",
+      slidesPerGroup: 1,
       spaceBetween: 34,
       breakpointsBase: "container",
       navigation: false,
       pagination: false,
       breakpoints: {
-        0: {
-          slidesPerView: 1,
-          slidesPerGroup: 1,
-        },
-        1000: {
-          slidesPerView: 2,
+        1120: {
           slidesPerGroup: 2,
         },
       },
@@ -271,6 +313,20 @@
     canSlideNext = !swiper.isEnd;
   };
 
+  const scrollSwiperToGroup = async (groupLetter) => {
+    if (!groupLetter || normalizedShowGroup || !swiperInitialized || !swiperContainer?.swiper) return;
+    if (lastAutoScrolledGroup === groupLetter) return;
+
+    const groupIndex = visibleGroups.findIndex((group) => group.letter === groupLetter);
+    if (groupIndex < 0) return;
+
+    lastAutoScrolledGroup = groupLetter;
+    await tick();
+    swiperContainer.swiper.update();
+    swiperContainer.swiper.slideTo(groupIndex, 450);
+    syncNavState();
+  };
+
   const slidePrev = () => {
     swiperContainer?.swiper?.slidePrev();
   };
@@ -279,26 +335,71 @@
     swiperContainer?.swiper?.slideNext();
   };
 
+  const selectMobileGroup = (letter) => {
+    hasUserSelectedMobileGroup = true;
+    activeMobileGroup = letter;
+  };
+
+  const scrollMobileTabsToGroup = async (groupLetter) => {
+    if (!groupLetter || !groupTabsElement) return;
+
+    await tick();
+    const activeTab = groupTabsElement.querySelector(`[data-group="${groupLetter}"]`);
+    activeTab?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  };
+
   onMount(() => {
+    pageUrlContext = getPageUrlContext();
+
+    if (rootElement) {
+      isMobile = rootElement.getBoundingClientRect().width < 640;
+    }
+
+    if (rootElement && typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(([entry]) => {
+        isMobile = entry.contentRect.width < 640;
+      });
+      resizeObserver.observe(rootElement);
+    }
+
     loadGroups();
-    initSwiper();
+    if (!isMobile) initSwiper();
 
     return () => {
       clearTimeout(pollTimeout);
       destroySwiper();
+      resizeObserver?.disconnect();
     };
   });
 
   $: resultsUrl = `${RESULTS_BASE_URL}/EO-df-grupos${parseBoolean(isDev) ? "-dev" : ""}.json`;
   $: normalizedShowGroup = sanitizeText(showGroup).toUpperCase().trim();
+  $: highlightedTeamIds = getHighlightedTeamIds(pageUrlContext);
+  $: showSponsorLogo = highlightedTeamIds.has(argentinaTeamId);
   $: visibleGroups = normalizedShowGroup ? groups.filter((group) => group.letter === normalizedShowGroup) : groups;
-  $: useSwiper = visibleGroups.length > 1;
-  $: if (groups.length && swiperContainer && !swiperInitialized) {
+  $: highlightedTeamGroup = highlightedTeamIds.size ? groups.find((group) => group.teams.some(isHighlightedTeam))?.letter || "" : "";
+  $: activeMobileGroup = normalizedShowGroup || (hasUserSelectedMobileGroup && activeMobileGroup && groups.some((group) => group.letter === activeMobileGroup) ? activeMobileGroup : highlightedTeamGroup || visibleGroups[0]?.letter || "A");
+  $: displayedGroups = isMobile && !normalizedShowGroup ? visibleGroups.filter((group) => group.letter === activeMobileGroup) : visibleGroups;
+  $: useSwiper = visibleGroups.length > 1 && !isMobile;
+  $: if (isMobile && swiperInitialized) {
+    destroySwiper();
+  }
+  $: if (groups.length && swiperContainer && !swiperInitialized && !isMobile) {
     initSwiper();
+  }
+  $: if (highlightedTeamGroup && swiperInitialized && !isMobile) {
+    scrollSwiperToGroup(highlightedTeamGroup);
+  }
+  $: if (isMobile && !normalizedShowGroup && activeMobileGroup) {
+    scrollMobileTabsToGroup(activeMobileGroup);
   }
 </script>
 
-<div class="eo-grupos">
+<div class="eo-grupos" bind:this={rootElement}>
   <div class="eo-grupos__header">
     <div>
       <h2>Fase de grupos</h2>
@@ -312,26 +413,40 @@
         {/if}
       </p>
     </div>
-    <img class="eo-grupos__logo" src="https://especiales.elobservador.com.uy/interactivo/widgets/eo-countdown-mundial-2026/ypf.png" alt="YPF" loading="lazy" />
+    {#if showSponsorLogo}
+      <img class="eo-grupos__logo" src="https://especiales.elobservador.com.uy/interactivo/widgets/eo-countdown-mundial-2026/ypf.png" alt="YPF" loading="lazy" />
+    {/if}
   </div>
+
+  {#if isMobile && !normalizedShowGroup}
+    <div class="eo-grupos__group-tabs-wrap">
+      <div class="eo-grupos__group-tabs" aria-label="Seleccionar grupo" bind:this={groupTabsElement}>
+        {#each visibleGroups as group}
+          <button type="button" data-group={group.letter} class:is-active={group.letter === activeMobileGroup} aria-pressed={group.letter === activeMobileGroup} on:click={() => selectMobileGroup(group.letter)}>
+            {group.letter}
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   <div class="eo-grupos__table-wrap">
     {#if useSwiper}
       <button class="eo-grupos__nav eo-grupos__nav--prev" aria-label="Grupo anterior" on:click={slidePrev} disabled={!canSlidePrev}>‹</button>
       <swiper-container init="false" bind:this={swiperContainer} class="eo-grupos__swiper">
-        {#each visibleGroups as group}
+        {#each displayedGroups as group}
           <swiper-slide>
             <section class="eo-group">
               <header>
                 <h3>Grupo {group.letter}</h3>
                 <div class="eo-group__cols">
-                  <span>MP</span>
-                  <span>W</span>
-                  <span>D</span>
-                  <span>L</span>
+                  <span>PJ</span>
+                  <span>PG</span>
+                  <span>PE</span>
+                  <span>PP</span>
                   <span>GF</span>
-                  <span>GA</span>
-                  <span>GD</span>
+                  <span>GC</span>
+                  <span>DG</span>
                   <span>Pts</span>
                 </div>
               </header>
@@ -339,7 +454,7 @@
               <div class="eo-group__rows">
                 {#if group.teams.length}
                   {#each group.teams as team, teamIndex}
-                    <article class="eo-row" class:is-selected-row={String(team.id) === String(teamSelect).trim() || String(team.sourceId) === String(teamSelect).trim()}>
+                    <article class="eo-row" class:is-selected-row={isHighlightedTeam(team)} class:is-lower-ranked={hasPointsData && teamIndex > 1}>
                       <span class="eo-row__position">{teamIndex + 1}</span>
                       <div class="eo-row__team">
                         {#if team.flagUrl}<img src={team.flagUrl} alt={team.displayName} loading="lazy" />{/if}
@@ -347,7 +462,7 @@
                       </div>
                       <div class="eo-row__stats">
                         <span>{team.played}</span><span>{team.won}</span><span>{team.draw}</span><span>{team.lost}</span><span>{team.goalsFor}</span><span>{team.goalsAgainst}</span><span>{team.goalDiff}</span>
-                        <span class="eo-row__points {hasPointsData && teamIndex === 0 ? 'is-top' : hasPointsData && teamIndex === 1 ? 'is-second' : ''}">{team.points}</span>
+                        <span class="eo-row__points {hasPointsData && teamIndex < 2 ? 'is-qualified' : hasPointsData && teamIndex === 2 ? 'is-possible' : ''}">{team.points}</span>
                       </div>
                     </article>
                   {/each}
@@ -367,25 +482,25 @@
       </swiper-container>
       <button class="eo-grupos__nav eo-grupos__nav--next" aria-label="Grupo siguiente" on:click={slideNext} disabled={!canSlideNext}>›</button>
     {:else}
-      {#each visibleGroups as group}
-        <section class="eo-group eo-group--single">
+      {#each displayedGroups as group (group.letter)}
+        <section class="eo-group eo-group--single" class:is-mobile-group-change={isMobile && !normalizedShowGroup}>
           <header>
             <h3>Grupo {group.letter}</h3>
             <div class="eo-group__cols">
-              <span>MP</span><span>W</span><span>D</span><span>L</span><span>GF</span><span>GA</span><span>GD</span><span>Pts</span>
+              <span>PJ</span><span>PG</span><span>PE</span><span>PP</span><span>GF</span><span>GC</span><span>DG</span><span>Pts</span>
             </div>
           </header>
           <div class="eo-group__rows">
             {#if group.teams.length}
               {#each group.teams as team, teamIndex}
-                <article class="eo-row" class:is-selected-row={String(team.id) === String(teamSelect).trim() || String(team.sourceId) === String(teamSelect).trim()}>
+                <article class="eo-row" class:is-selected-row={isHighlightedTeam(team)} class:is-lower-ranked={hasPointsData && teamIndex > 1}>
                   <span class="eo-row__position">{teamIndex + 1}</span>
                   <div class="eo-row__team">
                     {#if team.flagUrl}<img src={team.flagUrl} alt={team.displayName} loading="lazy" />{/if}<strong>{team.displayName}</strong>
                   </div>
                   <div class="eo-row__stats">
                     <span>{team.played}</span><span>{team.won}</span><span>{team.draw}</span><span>{team.lost}</span><span>{team.goalsFor}</span><span>{team.goalsAgainst}</span><span>{team.goalDiff}</span>
-                    <span class="eo-row__points {hasPointsData && teamIndex === 0 ? 'is-top' : hasPointsData && teamIndex === 1 ? 'is-second' : ''}">{team.points}</span>
+                    <span class="eo-row__points {hasPointsData && teamIndex < 2 ? 'is-qualified' : hasPointsData && teamIndex === 2 ? 'is-possible' : ''}">{team.points}</span>
                   </div>
                 </article>
               {/each}
@@ -568,10 +683,14 @@
     --eo-swiper-bullet-gap: 5px;
     --eo-swiper-bullet-color: rgba(255, 255, 255, 0.42);
     --eo-swiper-bullet-active: #ffffff;
+    --eo-slide-width: 450px;
+    --eo-swiper-gap: 34px;
     background: radial-gradient(circle at left 20%, rgba(75, 75, 75, 0.16), transparent 38%), var(--eo-bg);
     color: var(--eo-text);
     font-family: "Instrument Sans", sans-serif;
     padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .eo-grupos__header {
@@ -609,7 +728,66 @@
     overflow: visible;
   }
 
+  .eo-grupos__group-tabs-wrap {
+    position: relative;
+  }
+
+  .eo-grupos__group-tabs-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 46px;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(23, 26, 25, 0), var(--eo-bg) 82%);
+  }
+
+  .eo-grupos__group-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: -8px 0 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .eo-grupos__group-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .eo-grupos__group-tabs button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.66);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .eo-grupos__group-tabs button.is-active {
+    background: var(--eo-blue);
+    color: #fff;
+  }
+
   .eo-group {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
     padding: 0 2px 8px;
     border-right: 2px solid #535353;
     padding-right: 30px;
@@ -617,7 +795,10 @@
   .eo-group--single {
     border-right: 0;
     padding-right: 0;
-    width: 100%;
+  }
+
+  .eo-group--single.is-mobile-group-change {
+    animation: mobileGroupChange 0.28s ease both;
   }
 
   .eo-group header {
@@ -630,7 +811,7 @@
 
   .eo-group h3 {
     margin: 0;
-    font-size: 26px;
+    font-size: 20px;
     font-weight: 500;
     line-height: 1;
   }
@@ -639,15 +820,15 @@
   .eo-row__stats {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    gap: 10px;
+    gap: 0px;
     text-align: center;
     align-items: center;
   }
 
   .eo-group__cols {
-    min-width: 357px;
-    color: rgba(255, 255, 255, 0.74);
-    font-size: 16px;
+    min-width: 288px;
+    color: rgba(255, 255, 255, 0.407);
+    font-size: 15px;
     line-height: 1.1;
   }
 
@@ -658,14 +839,14 @@
 
   .eo-row {
     display: grid;
-    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 10px;
+    gap: 0px;
     min-height: 46px;
   }
 
   .eo-row__position {
-    font-size: 24px;
+    font-size: 20px;
     line-height: 1;
   }
 
@@ -677,15 +858,15 @@
   }
 
   .eo-row__team img {
-    width: 30px;
-    height: 20px;
-    object-fit: cover;
+    width: 25px;
+
+    object-fit: contain;
     border: 1px solid rgba(255, 255, 255, 0.2);
     flex-shrink: 0;
   }
 
   .eo-row__team strong {
-    font-size: 22px;
+    font-size: 18px;
     line-height: 1;
     font-weight: 400;
     white-space: nowrap;
@@ -696,19 +877,39 @@
       text-shadow 0.2s ease;
   }
 
+  .eo-row.is-lower-ranked {
+    color: rgba(255, 255, 255, 0.58);
+  }
+
+  .eo-row.is-lower-ranked .eo-row__team img {
+    opacity: 0.72;
+  }
+
+  .eo-row.is-lower-ranked .eo-row__stats {
+    color: rgba(255, 255, 255, 0.58);
+  }
+
+  .eo-row.is-lower-ranked .eo-row__team strong {
+    color: rgba(255, 255, 255, 0.428);
+  }
+
+  .eo-row.is-lower-ranked .eo-row__points {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
   .eo-row.is-selected-row {
-    background: rgba(255, 255, 255, 0.12);
-    border-left: 3px solid rgba(255, 255, 255, 0.72);
-    border-radius: 4px;
-    padding-left: 8px;
-    margin-left: -10px;
+    background: #3c5dac;
+    margin-left: -12px;
+    padding-right: 3px;
+    padding-left: 13px;
+    width: calc(100% - 2px);
   }
 
   .eo-row__stats {
-    min-width: 340px;
-    font-size: 20px;
+    min-width: 290px;
+    font-size: 14px;
     line-height: 1.1;
-    color: rgba(255, 255, 255, 0.76);
+    color: rgba(255, 255, 255, 0.428);
   }
 
   .eo-group__cols span,
@@ -725,16 +926,17 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.08);
+    background: #3d3d3d;
     border-bottom: 4px solid transparent;
     color: #fff;
+    line-height: 1;
   }
 
-  .eo-row__points.is-top {
+  .eo-row__points.is-qualified {
     border-bottom-color: var(--eo-blue);
   }
 
-  .eo-row__points.is-second {
+  .eo-row__points.is-possible {
     border-bottom-color: var(--eo-yellow);
   }
 
@@ -780,6 +982,10 @@
     --swiper-pagination-color: var(--eo-swiper-bullet-active);
     --swiper-pagination-bullet-size: var(--eo-swiper-bullet-size);
     --swiper-pagination-bullet-horizontal-gap: var(--eo-swiper-bullet-gap);
+  }
+
+  .eo-grupos__swiper swiper-slide {
+    width: var(--eo-slide-width);
   }
 
   .eo-grupos__nav {
@@ -828,9 +1034,166 @@
     display: none;
   }
 
+  @keyframes mobileGroupChange {
+    0% {
+      opacity: 0.58;
+      transform: translateX(10px);
+      filter: brightness(1.18);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+      filter: brightness(1);
+    }
+  }
+
   @container eo-grupos (max-width: 1000px) {
     .eo-group {
+      padding-left: 0;
+    }
+  }
+
+  @container eo-grupos (min-width: 1120px) {
+    .eo-grupos__swiper swiper-slide {
+      width: calc((100% - var(--eo-swiper-gap)) / 2);
+    }
+
+    .eo-grupos__swiper swiper-slide:nth-child(even) .eo-group {
+      border-right: 0;
+    }
+  }
+
+  @container eo-grupos (min-width: 700px) and (max-width: 1119px) {
+    .eo-grupos__table-wrap::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 6;
+      width: 70px;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(45, 46, 49, 0), var(--eo-panel) 82%);
+    }
+  }
+
+  @container eo-grupos (max-width: 699px) {
+    .eo-grupos__swiper swiper-slide {
+      width: 100%;
+    }
+  }
+
+  @container eo-grupos (max-width: 640px) {
+    .eo-group {
+      overflow: hidden;
+    }
+    .eo-grupos {
+      padding: 14px 10px 18px;
+    }
+
+    .eo-grupos__header {
+      gap: 12px;
+    }
+
+    .eo-grupos__header h2 {
+      font-size: 14px;
+    }
+
+    .eo-grupos__header p {
+      margin: 8px 0 20px;
+      font-size: 9px;
+    }
+
+    .eo-grupos__logo {
+      height: 21px;
+    }
+
+    .eo-grupos__table-wrap {
+      padding: 14px 12px 16px;
+      overflow-x: auto;
+    }
+
+    .eo-group {
+      border-right: 0;
       padding: 0;
+    }
+
+    .eo-group header {
+      grid-template-columns: 112px auto;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .eo-group h3 {
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.66);
+      text-transform: uppercase;
+    }
+
+    .eo-group__cols,
+    .eo-row__stats {
+      grid-template-columns: repeat(8, 22px);
+      gap: 0px;
+      // min-width: 204px;
+    }
+
+    .eo-group__cols {
+      font-size: 11px;
+      margin-left: -2px;
+    }
+
+    .eo-row {
+      grid-template-columns: 0 minmax(104px, 1fr) auto;
+      gap: 8px;
+      min-height: 27px;
+    }
+
+    .eo-row__position {
+      display: none;
+    }
+
+    .eo-row__team {
+      gap: 4px;
+      min-width: 101px;
+    }
+
+    .eo-row__team img {
+      width: 14px;
+      height: 10px;
+    }
+
+    .eo-row__team strong {
+      font-size: 15px;
+    }
+
+    .eo-row__stats {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-left: 110px;
+    }
+
+    .eo-group__cols span,
+    .eo-row__stats span {
+      min-height: 18px;
+    }
+
+    .eo-row__points {
+      min-width: 22px;
+      height: 24px;
+    }
+
+    .eo-row.is-selected-row {
+      margin-left: -6px;
+      padding-left: 5px;
+    }
+
+    .eo-grupos__legend {
+      align-items: flex-start;
+      flex-direction: column;
+      // flex-direction: row;
+      gap: 11px;
+      font-size: 11px;
     }
   }
 </style>

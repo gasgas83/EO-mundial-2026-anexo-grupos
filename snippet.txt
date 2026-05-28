@@ -1,2 +1,2 @@
-<script type="module" src="https://strapi.elobservador.com.uy/eo-widgets/eo-mundial/eo-anexo-grupos/eo-mundial-2026-anexo-grupos.d3b85e1f.js"></script>
+<script type="module" src="https://strapi.elobservador.com.uy/eo-widgets/eo-mundial/eo-anexo-grupos/eo-mundial-2026-anexo-grupos.e74ea480.js"></script>
 <eo-grupos-mundial td-allow></eo-grupos-mundial>
